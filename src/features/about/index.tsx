@@ -1,13 +1,11 @@
 import { ModuleWrapper } from "@components/module-wrapper";
-import { useRequestContext } from "@providers/request-provider";
 import { Alert, Badge } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Download, Heart, Coffee } from "lucide-react";
 import {
   MainContainer,
   SubContainer,
   TileContainer,
-  GridContainer,
   TerminalContainer,
   CardContainer,
   UserContainer,
@@ -37,6 +35,7 @@ export const AboutModule = () => {
     const techKeys = Object.keys(TechStack);
     const hoveredKey = hoveredEl.classList[1].split("-")[1];
     const hoveredIdx = techKeys.indexOf(hoveredKey);
+    const mediaQueryPoint = document.body.clientWidth > 1536;
 
     let newOrder: string[];
 
@@ -48,7 +47,7 @@ export const AboutModule = () => {
       newOrder = [techKeys[1], techKeys[2], techKeys[0]];
     }
 
-    if (JSON.stringify(cardOrder) != JSON.stringify(newOrder)) {
+    if (JSON.stringify(cardOrder) != JSON.stringify(newOrder) && mediaQueryPoint) {
       await sleep(1500);
 
       setCardOrder(newOrder);
@@ -134,7 +133,7 @@ export const AboutModule = () => {
                   &nbsp;
                 </>
                 <span>
-                  New version available:
+                  New version available:&nbsp;
                   {
                     TechStack.site.segment_i.tags.find((tag) => tag.label === "latest-version")
                       ?.value
