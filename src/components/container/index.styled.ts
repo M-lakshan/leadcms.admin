@@ -248,6 +248,36 @@ const SubContainer = styled(Container)<StyledProps>`
     grid-area: 1/1/3/3;
   }
 
+  &.banner-container.logo-test {
+    ${GSB.DPflex("row", "center", "center", "max-content", "100%")}
+    grid-area: 1/1/2/3 !important;
+    
+    .logo-container {
+      ${GSB.DPgrid(["65%", "35%"], ["repeat(2,max-content)"], "max-content", "max-content")}
+      
+      img {
+        grid-area: 1/2/3/3;
+      }
+      
+      .brand-name {
+        grid-area: 1/1/2/2;
+        font-size: 54px;
+        text-align: center;
+        align-self: flex-end;
+      }
+      
+      .brand-moto {
+        grid-area: 2/1/3/2;
+        justify-self: center;
+        align-self: flex-start;
+      }
+    }
+
+    .badge-container {
+      display: none !important;
+    } 
+  }
+
   &.alert-container {
     ${GSB.DPflex("column", "center", "center", "100%", "100%")}
     margin-bottom: 15px;
@@ -306,6 +336,10 @@ const SubContainer = styled(Container)<StyledProps>`
         color: ${({ theme }) => theme.palette.customAlerts.attention.captionText};
       }
     }
+  }
+
+  &.alert-container.logo-test {
+    display: none !important;
   }
 
   &.system-details-container {

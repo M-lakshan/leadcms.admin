@@ -82,7 +82,9 @@ export const AboutModule = () => {
             cmpStyles: [
               "sub-container",
               "banner-container",
-              showUpdateIndicator ? "" : "no-update-indicator",
+              // showUpdateIndicator ? "" : "no-update-indicator",
+              "no-update-indicator",
+              "logo-test",
             ],
           }}
           cmpFontSize={16}
@@ -94,7 +96,7 @@ export const AboutModule = () => {
             }}
             cmpFontSize={16}
           >
-            <img src="/images/logo.png" alt="LeadCMS.ai Logo" className="brand-logo" />
+            <img src="/images/LeadCMSlogo.png" alt="LeadCMS.ai Logo" className="brand-logo" />
             <p className="brand-name">LeadCMS.ai</p>
             <p className="brand-moto">The Open-Source Sales Automation & CMS for SaaS</p>
           </TileContainer>
@@ -122,7 +124,7 @@ export const AboutModule = () => {
             cmpID="update_indicator"
             styleObj={{
               cmpTag: "container",
-              cmpStyles: ["sub-container", "alert-container"],
+              cmpStyles: ["sub-container", "alert-container", "logo-test"],
             }}
             cmpFontSize={16}
           >
