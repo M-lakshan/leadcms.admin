@@ -1,7 +1,7 @@
 import { ModuleWrapper } from "@components/module-wrapper";
 import { useRequestContext } from "@providers/request-provider";
 import { Alert, Badge } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Download, Heart, Coffee, Laptop, Github } from "lucide-react";
 import {
   MainContainer,
@@ -25,46 +25,87 @@ import {
 } from "./siteConfigInfo";
 
 export const AboutModule = () => {
-  const [cardOrder, setCardOrder] = useState(Object.keys(TechStack));
+  const [gitRepoData, setGitRepoData] = useState(null);
+  const [latestVersion, setLatestVersion] = useState<string | null>(null);
+  const [currentVersion, setCurrentVersion] = useState<string | null>(null);
+  const [versionFetchError, setVersionFetchError] = useState<string | null>(null);
   const [systemInfoCards, setSystemInfoCards] = useState(Object.entries(TechStack));
-  const selfHostedBadge = LeadCMSbadges.find((mt) => mt.label === "Self-Hosted") || null;
-  const showUpdateIndicator = Storage.server.deployment === "On-Premises" && selfHostedBadge;
+  const [updateIndicator, setUpdateIndicator] = useState(false);
 
-  const sleep = (ms: number) =>
+  const selfHostedBadge = LeadCMSbadges.find((mt) => mt.label === "Self-Hosted") || null;
+  const versionValidated = useRef(false);
+
+  const { client } = useRequestContext();
+
+  const operationHold = (ms: number) =>
     new Promise<void>((resolve) => window.setTimeout(() => resolve(), ms));
 
-  const resetPyramidCards = async (hoveredEl: HTMLElement) => {
-    const techKeys = Object.keys(TechStack);
-    const hoveredKey = hoveredEl.classList[1].split("-")[1];
-    const hoveredIdx = techKeys.indexOf(hoveredKey);
+  ///////////////// temp hook ///////////////////////
+  useEffect(() => {
+    const versionValidator = async () => {
+      if (currentVersion && gitRepoData && !versionValidated.current) {
+        // Storage.server.deployment === "On-Premises"
+        await operationHold(2000);
 
-    let newOrder: string[];
+        const curVsn = parseFloat(currentVersion);
+        const lstVsn = parseFloat(gitRepoData["id"]);
+        versionValidated.current = true;
 
-    if (hoveredIdx === 0) {
-      newOrder = [techKeys[1], techKeys[0], techKeys[2]];
-    } else if (hoveredIdx === 1) {
-      newOrder = [techKeys[0], techKeys[1], techKeys[2]];
-    } else {
-      newOrder = [techKeys[1], techKeys[2], techKeys[0]];
-    }
+        console.log(curVsn, lstVsn);
+        setUpdateIndicator(curVsn < lstVsn);
+      }
+    };
 
-    if (JSON.stringify(cardOrder) != JSON.stringify(newOrder)) {
-      await sleep(1500);
+    versionValidator();
+  }, [currentVersion, gitRepoData]);
+  //////////////////////////////////////////////////////
 
-      setCardOrder(newOrder);
+  useEffect(() => {
+    const versionValidator = async () => {
+      if (currentVersion && latestVersion && !versionValidated.current) {
+        // Storage.server.deployment === "On-Premises"operationHold
+        await operationHold(2000);
 
-      const refinedCards: [string, typeof TechStack.site][] = newOrder.map((key) => {
-        const found = systemInfoCards.find(([k]) => k === key);
-        const data = found?.[1] ?? TechStack[key as keyof typeof TechStack];
+        const curVsn = parseFloat(currentVersion);
+        const lstVsn = parseFloat(latestVersion);
+        versionValidated.current = true;
 
-        return [key, data];
-      });
+        setUpdateIndicator(curVsn < lstVsn);
+      }
+    };
 
-      setSystemInfoCards(refinedCards);
+    versionValidator();
+  }, [currentVersion, latestVersion]);
 
-      await sleep(3000);
-    }
-  };
+  useEffect(() => {
+    const getCurrentVersion = async () => {
+      const { data } = await client.api.versionList();
+
+      setCurrentVersion(data.version || "Unknown");
+    };
+
+    const getLatestVersion = async () => {
+      // fetch(`https://api.github.com/repos/LeadCMS/leadcms.admin/releases`)
+      fetch("https://api.github.com/repos/LeadCMS/leadcms.admin")
+        .then((response) => response.json())
+        .then((data) => {
+          console.log(data);
+          if (data) {
+            // const repoObj = JSON.parse(data);
+            // setGitRepoData(repoObj);
+
+            setGitRepoData(data);
+            // setLatestVersion(data.latestRelease);
+          } else {
+            setVersionFetchError(null);
+          }
+        })
+        .catch((err) => setVersionFetchError(err.message));
+    };
+
+    getCurrentVersion();
+    getLatestVersion();
+  });
 
   return (
     <ModuleWrapper breadcrumbs={[]} currentBreadcrumb={"About"}>
@@ -76,6 +117,9 @@ export const AboutModule = () => {
         }}
         cmpFontSize={18}
       >
+        <p>
+          Backend: {currentVersion} | Backend: {latestVersion}
+        </p>
         <SubContainer
           cmpID="banner_area"
           styleObj={{
@@ -83,7 +127,7 @@ export const AboutModule = () => {
             cmpStyles: [
               "sub-container",
               "banner-container",
-              showUpdateIndicator ? "" : "no-update-indicator",
+              updateIndicator ? "" : "no-update-indicator",
             ],
           }}
           cmpFontSize={16}
@@ -114,7 +158,7 @@ export const AboutModule = () => {
           </TileContainer>
         </SubContainer>
 
-        {showUpdateIndicator && (
+        {updateIndicator && (
           <SubContainer
             cmpID="update_indicator"
             styleObj={{
@@ -129,13 +173,7 @@ export const AboutModule = () => {
                   <Download />
                   &nbsp;
                 </>
-                <span>
-                  New version available:
-                  {
-                    TechStack.site.segment_i.tags.find((tag) => tag.label === "latest-version")
-                      ?.value
-                  }
-                </span>
+                <span>New version available:&nbsp;v{latestVersion}</span>
               </h5>
               <p className="alert-context">
                 Update your on-premises deployment using Docker Compose:
@@ -157,7 +195,7 @@ export const AboutModule = () => {
             cmpStyles: [
               "sub-container",
               "system-details-container",
-              showUpdateIndicator ? "" : "no-update-indicator",
+              updateIndicator ? "" : "no-update-indicator",
             ],
           }}
         >
