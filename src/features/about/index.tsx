@@ -31,6 +31,8 @@ export const AboutModule = () => {
   const [versionFetchError, setVersionFetchError] = useState<string | null>(null);
   const [systemInfoCards, setSystemInfoCards] = useState(Object.entries(TechStack));
   const [updateIndicator, setUpdateIndicator] = useState(false);
+  const [dataFetched, setDataFetched] = useState(false);
+  const [preLoading, setPreLoading] = useState(true);
 
   const selfHostedBadge = LeadCMSbadges.find((mt) => mt.label === "Self-Hosted") || null;
   const versionValidated = useRef(false);
@@ -42,24 +44,28 @@ export const AboutModule = () => {
 
   ///////////////// temp hook ///////////////////////
   useEffect(() => {
-    const versionValidator = async () => {
-      if (currentVersion && gitRepoData && !versionValidated.current) {
-        // Storage.server.deployment === "On-Premises"
-        await operationHold(2000);
+    // const versionValidator = async () => {
+    if (currentVersion && gitRepoData && !versionValidated.current) {
+      // Storage.server.deployment === "On-Premises"
+      // await operationHold(5000);
 
-        const curVsn = parseFloat(currentVersion);
-        const lstVsn = parseFloat(gitRepoData["id"]);
-        versionValidated.current = true;
+      const curVsn = parseFloat(currentVersion);
+      const lstVsn = parseFloat(gitRepoData["iPv4"]);
+      versionValidated.current = true;
 
-        console.log(curVsn, lstVsn);
+      console.log(curVsn, lstVsn);
+      if (curVsn < lstVsn) {
+        setPreLoading(false);
         setUpdateIndicator(curVsn < lstVsn);
       }
-    };
+    }
+    // };
 
-    versionValidator();
+    // versionValidator();
   }, [currentVersion, gitRepoData]);
   //////////////////////////////////////////////////////
 
+  /*
   useEffect(() => {
     const versionValidator = async () => {
       if (currentVersion && latestVersion && !versionValidated.current) {
@@ -76,17 +82,13 @@ export const AboutModule = () => {
 
     versionValidator();
   }, [currentVersion, latestVersion]);
+  */
 
   useEffect(() => {
-    const getCurrentVersion = async () => {
-      const { data } = await client.api.versionList();
-
-      setCurrentVersion(data.version || "Unknown");
-    };
-
-    const getLatestVersion = async () => {
+    const getVersion = async () => {
       // fetch(`https://api.github.com/repos/LeadCMS/leadcms.admin/releases`)
-      fetch("https://api.github.com/repos/LeadCMS/leadcms.admin")
+      // fetch("https://api.github.com/repos/LeadCMS/leadcms.admin")
+      fetch("http://localhost:8080/api/version") // mock fetch
         .then((response) => response.json())
         .then((data) => {
           console.log(data);
@@ -103,6 +105,18 @@ export const AboutModule = () => {
         .catch((err) => setVersionFetchError(err.message));
     };
 
+    const getCurrentVersion = async () => {
+      const { data } = await client.api.versionList();
+
+      setCurrentVersion(data.version || "Unknown");
+    };
+
+    const getLatestVersion = async () => {
+      await operationHold(5000);
+
+      await getVersion();
+    };
+
     getCurrentVersion();
     getLatestVersion();
   });
@@ -117,9 +131,17 @@ export const AboutModule = () => {
         }}
         cmpFontSize={18}
       >
-        <p>
-          Backend: {currentVersion} | Backend: {latestVersion}
-        </p>
+        <div className="mock-data-fetch-container">
+          <p className="content">
+            <span className="label">Attribute: </span>&nbsp;
+            {preLoading ? (
+              <span className="loading-animation">&nbsp;</span>
+            ) : (
+              <span className="fetched-data">- result | update available -</span>
+            )}
+          </p>
+        </div>
+
         <SubContainer
           cmpID="banner_area"
           styleObj={{

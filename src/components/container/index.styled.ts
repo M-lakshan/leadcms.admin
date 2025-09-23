@@ -1,13 +1,55 @@
-import { styled, Theme } from "@mui/material";
+import { keyframes } from "@emotion/react";
+import { styled } from "@mui/material";
 import { StyledProps } from "types";
 import { Card, Container, CustomTerminal, User } from "./index";
 import * as GSB from "@utils/general-style-builder";
+
+const backgroundTransition = keyframes`
+  from {
+    background-position: 0% 50%;
+  }
+  to {
+    background-position: 100% 50%;
+  }
+`;
 
 const MainContainer = styled(Container)<StyledProps>`
   ${GSB.OverwriteDefaults(false)}
   ${GSB.DPblock("block", "max-content", "100%")}
 
   &.about-section-container {
+
+    .mock-data-fetch-container {
+      ${GSB.DPblock("block", "max-content", "max-content")}
+      background: ${({ theme }) => theme.palette.customSegments.TabularGridContainer.default};
+      min-width: 250px;
+      border-radius: 5px;
+      padding: 15px 20px;
+
+      p.content {
+        ${GSB.DPflex("row", "center", "center", "max-content", "max-content")}
+        
+        span.loading-animation {
+          ${GSB.DPblock("inline-block", "24px", "200px")}
+            background: linear-gradient(
+            to right,
+            ${({ theme }) => theme.palette.customSegments.TabularGridContainer.primaryHover},
+            ${({ theme }) => theme.palette.customSegments.TabularGridContainer.secondary},
+            ${({ theme }) => theme.palette.customSegments.TabularGridContainer.secondaryHover},
+            ${({ theme }) => theme.palette.customSegments.TabularGridContainer.secondary},
+            ${({ theme }) => theme.palette.customSegments.TabularGridContainer.primaryHover}
+          );
+          background-size: 200% 100%;
+          animation: ${backgroundTransition} 3s cubic-bezier(.65,.05,.36,1) infinite alternate;
+          padding: 8px 12px;
+          border-radius: 3px;
+        }
+        
+        span.fetched-data {
+          font-weight: 500;
+        }
+      }
+    }
 
     @media (max-width: ${({ theme }) => theme.mediaQueryPoints.desktopXL}) {   
       
