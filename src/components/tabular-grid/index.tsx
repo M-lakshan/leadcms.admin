@@ -128,7 +128,6 @@ export const TabularGrid = ({
                   const Icon = iconMap[service.icon as keyof typeof iconMap];
                   const healthState = gridObj.status.healthProgress;
                   let param = 0;
-                  console.log(gridObj.status.healthProgress, gridObj.status.type);
 
                   if (healthState >= 85) {
                     param = 85;
