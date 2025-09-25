@@ -81,24 +81,6 @@ export type CustomStylingInstance = {
   dymStyles?: string[];
 };
 
-export type CardContentProps = {
-  icon?: string;
-  title?: string;
-  descrp?: string;
-  tags?: {
-    label: string;
-    value: string;
-    attr: string;
-    ext?: string;
-  }[];
-  context?: {
-    label?: string;
-    value?: string;
-  }[];
-  children?: React.ReactNode;
-  hide?: boolean;
-};
-
 export type CLIinstance = {
   dir?: string;
   cmd: string[];
@@ -115,4 +97,42 @@ export type LocalContainerProps = {
 
 export type StyledProps = LocalContainerProps & {
   theme?: Theme;
+};
+
+export type TechStackSegment = {
+  title: string;
+  icon?: string;
+  descrp?: string;
+  tags?: TechStackTypeTag[];
+  context?: TechStackTypeTag[];
+  checkList?: string[];
+  children?: React.ReactNode;
+  hide?: boolean;
+};
+
+export type TechStackTypeTag = {
+  label: string;
+  value: string | number;
+  tag?: string;
+  attr?: string;
+  ext?: string;
+};
+
+export type TechStackType = {
+  segment_i: TechStackSegment;
+  segment_ii: TechStackSegment;
+  segment_iii: TechStackSegment;
+  checkList?: string[];
+  overWrite?: boolean;
+};
+
+export type BannerBadge = {
+  label: string | number | undefined;
+  variant?: string;
+  attr?: string;
+};
+
+export type VersionDetails = {
+  version: "string";
+  updatedOn?: "string";
 };
