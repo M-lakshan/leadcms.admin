@@ -1,86 +1,95 @@
 import { Github, Globe, BookOpen } from "lucide-react";
 
 export const TechStack = {
-  site: {
-    segment_i: {
+  categories: {
+    site: {
+      // dynamic obj
       icon: "Globe",
       title: "Website",
-      descrp: "Next.js with React 18 and Tailwind CSS",
-      tags: [
-        { label: "version", value: "v1.2.75-pre", attr: "primary" },
-        { label: "latest-version", value: "v1.2.80", attr: "secondary", ext: "available" },
+      descrp: "Next.js with Typescript",
+      tags: [],
+      checklist: [
+        "typescript",
+        "ts-node",
+        "eslint",
+        "prettier",
+        "husky",
+        "dotenv",
+        "style-loader",
+        "css-loader",
+        "webpack",
+        "swagger-typescript-api",
       ],
     },
-    segment_ii: {
-      context: [
-        { label: "framework", value: "Next.js v15.0.4" },
-        { label: "last-updated", value: "2025-01-08" },
-      ],
-    },
-    segment_iii: {
-      context: [
-        { label: "React", value: "v18.3.1" },
-        { label: "Tailwind CSS", value: "v3.4.0" },
-        { label: "shadcn/ui", value: "v0.9.0" },
-        { label: "Lucide Icons", value: "v0.460.0" },
-        { label: "TypeScript", value: "v5.6.3" },
-      ],
-    },
-  },
-  admin: {
-    segment_i: {
+    admin: {
+      // dynamic obj
       icon: "Layers",
       title: "Admin Portal",
       descrp: "React admin interface with Material-UI",
-      tags: [
-        { label: "version", value: "v1.2.75-pre", attr: "primary" },
-        { label: "latest-Version", value: "v1.2.80", attr: "secondary", ext: "available" },
+      tags: [],
+      checklist: [
+        "react",
+        "mui",
+        "chakra-ui",
+        "radix-ui",
+        "uiw",
+        "lucide-react",
+        "formik",
+        "zod",
+        "dnd-kit",
+        "lodash",
+        "tinymce",
+        "mdxeditor",
+        "monaco-editor",
+        "recharts",
       ],
     },
-    segment_ii: {
-      context: [
-        { label: "framework", value: "React v18.3.0 + Webpack" },
-        { label: "last-updated", value: "2025-01-08" },
-      ],
-    },
-    segment_iii: {
-      context: [
-        { label: "React", value: "v18.3.0" },
-        { label: "Material-UI", value: "v7.1.0" },
-        { label: "Chakra UI", value: "v3.2.0" },
-        { label: "React Hook Form", value: "v7.56.4" },
-        { label: "Monaco Editor", value: "v4.7.0" },
-        { label: "TypeScript", value: "v4.9.4" },
-      ],
+    backend: {
+      // static obj but could be better if dynamic
+      segment_i: {
+        icon: "Server",
+        title: "Backend",
+        descrp: ".NET 8 API with Entity Framework",
+        tags: [
+          { label: "version", value: "v1.2.75-pre", attr: "primary" },
+          { label: "latest-version", value: "v1.2.80", attr: "secondary", ext: "available" },
+        ],
+      },
+      segment_ii: {
+        context: [
+          { label: "framework", value: ".NET v8.0" },
+          { label: "last-updated", value: "2025-01-08" },
+        ],
+      },
+      segment_iii: {
+        context: [
+          { label: "ASP.NET Core", value: "v8.0.11" },
+          { label: "Entity Framework", value: "v8.0.11" },
+          { label: "NPGSQL (PostgreSQL)", value: "v8.0.11" },
+          { label: "AutoMapper", value: "v12.0.1" },
+          { label: "Serilog", value: "v7.0.0" },
+          { label: "Swagger/OpenAPI", value: "v6.5.0" },
+        ],
+      },
+      overWrite: true,
     },
   },
-  backend: {
-    segment_i: {
-      icon: "Server",
-      title: "Backend",
-      descrp: ".NET 8 API with Entity Framework",
-      tags: [
-        { label: "version", value: "v1.2.75-pre", attr: "primary" },
-        { label: "latest-version", value: "v1.2.80", attr: "secondary", ext: "available" },
-      ],
-    },
-    segment_ii: {
-      context: [
-        { label: "framework", value: ".NET v8.0" },
-        { label: "last-updated", value: "2025-01-08" },
-      ],
-    },
-    segment_iii: {
-      context: [
-        { label: "ASP.NET Core", value: "v8.0.11" },
-        { label: "Entity Framework", value: "v8.0.11" },
-        { label: "NPGSQL (PostgreSQL)", value: "v8.0.11" },
-        { label: "AutoMapper", value: "v12.0.1" },
-        { label: "Serilog", value: "v7.0.0" },
-        { label: "Swagger/OpenAPI", value: "v6.5.0" },
-      ],
-    },
-  },
+  omits: [
+    "day",
+    "bounce",
+    "typescript-eslint",
+    "local-storage",
+    "hastscript",
+    "locale-codes",
+    "infinite-scroll-component",
+    "spreadsheet",
+    "import",
+    "form",
+    "remark",
+    "plugin",
+    "util",
+    "error",
+  ],
 };
 
 export const Storage = {
@@ -103,29 +112,6 @@ export const Storage = {
     description: "",
   },
 };
-
-export const LeadCMSbadges = [
-  {
-    variant: "outline",
-    attr: "banner-transparent-green",
-    label: "Stable",
-  },
-  {
-    variant: "outline",
-    attr: "banner-transparent-blue",
-    label: `${TechStack.site.segment_i.tags.find((tag) => tag.label === "version")?.value}`,
-  },
-  {
-    variant: "outline",
-    attr: "banner-transparent-red",
-    label: "MIT License",
-  },
-  {
-    variant: "outline",
-    attr: "banner-transparent-orange",
-    label: "Self-Hosted",
-  },
-];
 
 export const ExternalResources = [
   { name: "Website", url: "https://leadcms.ai", icon: <Globe className="h-5 w-5" /> },
