@@ -2,16 +2,16 @@
 delete process.env.TS_NODE_PROJECT;
 
 import {resolve} from "path";
-import {container, ProvidePlugin, ProgressPlugin} from "webpack";
+import {container, DefinePlugin, ProvidePlugin, ProgressPlugin} from "webpack";
 import HtmlWebpackPlugin from "html-webpack-plugin";
 import {CleanWebpackPlugin} from "clean-webpack-plugin";
 import TsconfigPathsPlugin from "tsconfig-paths-webpack-plugin";
 import {Configuration as WebpackConfiguration} from "webpack";
 import {Configuration as WebpackDevServerConfiguration} from "webpack-dev-server";
+import CopyWebpackPlugin from "copy-webpack-plugin";
 import dotenv from "dotenv";
 import DotenvPlugin from "dotenv-webpack";
-import {dependencies} from "../package.json";
-import CopyWebpackPlugin from "copy-webpack-plugin";
+import { dependencies, devDependencies } from "../package.json";
 
 const {ModuleFederationPlugin} = container;
 
@@ -110,6 +110,12 @@ const configuration: Configuration = {
       Buffer: ["buffer", "Buffer"],
     }),
     new ProgressPlugin(),
+    new DefinePlugin({
+      APP_DEPENDENCIES: JSON.stringify({
+        ...dependencies,
+        ...devDependencies
+      }),
+    }),
   ],
 };
 
