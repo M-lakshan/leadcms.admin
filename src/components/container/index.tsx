@@ -1,7 +1,7 @@
 import React from "react";
 import { Globe, Server, Layers, Terminal } from "lucide-react";
 import { FaArrowTrendUp } from "react-icons/fa6";
-import { LocalContainerProps, CardContentProps, CLIinstance } from "types";
+import { LocalContainerProps, CLIinstance, TechStackSegment } from "types";
 import { SetComponentStyles } from "@utils/general-helper";
 
 export {
@@ -96,9 +96,9 @@ export const Card = ({
   className,
   onMouseEnter,
 }: LocalContainerProps & {
-  cHeader?: CardContentProps;
-  cBody?: CardContentProps;
-  cFooter?: CardContentProps;
+  cHeader?: TechStackSegment;
+  cBody?: TechStackSegment;
+  cFooter?: TechStackSegment;
   onMouseEnter?: (e: React.MouseEvent<HTMLDivElement>) => void;
 }) => {
   const cmpStyles = SetComponentStyles({ className, styleObj });
