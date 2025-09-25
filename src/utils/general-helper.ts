@@ -1,7 +1,8 @@
 import { RequestContextType } from "@providers/request-provider";
 import { continentListStorageKey, countryListStorageKey } from "./constants";
 import { NotificationsService } from "@hooks";
-import { CustomStylingInstance } from "types";
+import { CustomStylingInstance, TechStackType, TechStackTypeTag } from "types";
+import { string } from "zod";
 
 export const getCountryList = async (context: RequestContextType) => {
   const countries = localStorage.getItem(countryListStorageKey);
@@ -137,6 +138,147 @@ export function getModuleNameFromUrl(): string {
     .filter(Boolean)
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(" ");
+}
+
+export function generalizeDependencies(
+  deps: Record<string, string>,
+  filters: any
+): Record<string, TechStackType> {
+  const groupedDeps: Record<string, string> = {};
+  const techStack: Record<string, any> = {};
+  const allowedKeys = ["site", "admin", "backend"];
+  const uniqueKeyWords = [
+    "AJAX",
+    "API",
+    "CLI",
+    "CSS",
+    "DOM",
+    "DXD",
+    "DND",
+    "HTML",
+    "HTTP",
+    "HTTPS",
+    "JWT",
+    "JSON",
+    "MD",
+    "MDX",
+    "OAuth",
+    "REST",
+    "SEO",
+    "SQL",
+    "SVG",
+    "TS",
+    "UI",
+    "UX",
+    "JS",
+  ];
+
+  const neglectCheck = (list: string[], param: string) => {
+    return list.some((ngl) => param.toLowerCase().includes(ngl.toLowerCase()));
+  };
+
+  const filterFrameworks = (frameworkObj: Record<string, string>) => {
+    const seenBases = new Set<string>();
+    const filtered: Record<string, string> = {};
+
+    Object.keys(frameworkObj).forEach((key) => {
+      const baseName = key.split("@")[1].split("-")[0];
+
+      if (!seenBases.has(baseName)) {
+        filtered[key] = frameworkObj[key];
+        seenBases.add(baseName);
+      }
+    });
+
+    return filtered;
+  };
+
+  for (const [name, version] of Object.entries(deps)) {
+    if (name.startsWith("@")) {
+      if (name.includes("/")) {
+        const scope = name.split("/")[0];
+
+        if (!filters || (filters?.omits && !neglectCheck(filters.omits, scope))) {
+          groupedDeps[scope] = version;
+        }
+      } else {
+        if (!filters || (filters?.omits && !neglectCheck(filters.omits, name))) {
+          groupedDeps[name] = version;
+        }
+      }
+    } else {
+      if (!filters || (filters?.omits && !neglectCheck(filters.omits, name))) {
+        groupedDeps[`@${name}`] = version;
+      }
+    }
+  }
+
+  for (const key of allowedKeys) {
+    const category = filters?.categories?.[key];
+
+    if (!category) continue;
+
+    techStack[key] = !category?.overWrite
+      ? {
+          segment_i: {
+            icon: category.icon,
+            title: category.title,
+            descrp: category.descrp,
+            tags: category.tags || [],
+          },
+          segment_ii: {
+            context: category.segment_ii?.context || [
+              { label: "framework", value: "Unknown" },
+              { label: "last-updated", value: new Date().toISOString().split("T")[0] },
+            ],
+          },
+          segment_iii: {
+            context: [] as TechStackTypeTag[],
+          },
+        }
+      : {
+          segment_i: category.segment_i,
+          segment_ii: category.segment_ii,
+          segment_iii: category.segment_iii,
+        };
+
+    const checklist: string[] = category.checklist || [];
+
+    Object.entries(filterFrameworks(groupedDeps)).forEach(([depName, version]) => {
+      if (checklist.some((tag) => depName.includes(tag))) {
+        const keyName = depName.startsWith("@") ? depName.replace("@", "") : depName;
+
+        const labelName = keyName
+          .split("-")
+          .map((tag) => {
+            const label = tag.toLocaleLowerCase();
+            const uniqueKeyWord = uniqueKeyWords.find((unqPhrase) =>
+              label.includes(unqPhrase.toLowerCase())
+            );
+            const result = tag[0].toUpperCase() + tag.split("").splice(1).join("");
+
+            if (uniqueKeyWord) {
+              if (uniqueKeyWord.length != label.length) {
+                return result.replace(uniqueKeyWord.toLocaleLowerCase(), uniqueKeyWord);
+              } else {
+                return uniqueKeyWord;
+              }
+            } else {
+              return result;
+            }
+          })
+          .join(" ");
+
+        techStack[key].segment_iii.context.push({
+          tag: depName,
+          label: labelName,
+          value: `v${version.replace("^", "")}`,
+        });
+      }
+    });
+  }
+
+  return techStack;
 }
 
 export function SetComponentStyles({
