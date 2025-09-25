@@ -3,19 +3,19 @@ import { useRequestContext } from "@providers/request-provider";
 import { Alert, Badge } from "@mui/material";
 import { useEffect, useState, useRef } from "react";
 import { Download, Heart, Coffee, Laptop, Github } from "lucide-react";
+import { generalizeDependencies } from "@utils/general-helper";
 import {
   MainContainer,
   SubContainer,
   TileContainer,
-  GridContainer,
   TerminalContainer,
   CardContainer,
   UserContainer,
 } from "@components/container";
 import { TabularGridContainer } from "@components/tabular-grid";
 import { TitleContainer } from "@components/title";
+import { BannerBadge, TechStackType, TechStackTypeTag, VersionDetails } from "types";
 import {
-  LeadCMSbadges,
   TechStack,
   Storage,
   ExternalResources,
@@ -25,79 +25,150 @@ import {
 } from "./siteConfigInfo";
 
 export const AboutModule = () => {
-  const [gitRepoData, setGitRepoData] = useState(null);
-  const [latestVersion, setLatestVersion] = useState<string | null>(null);
-  const [currentVersion, setCurrentVersion] = useState<string | null>(null);
+  const [gitRepoData, setGitRepoData] = useState(null); // remove - unnecessary
+  const [latestVersion, setLatestVersion] = useState<VersionDetails | null>(null);
+  const [currentVersion, setCurrentVersion] = useState<VersionDetails | null>(null);
   const [versionFetchError, setVersionFetchError] = useState<string | null>(null);
-  const [systemInfoCards, setSystemInfoCards] = useState(Object.entries(TechStack));
-  const [updateIndicator, setUpdateIndicator] = useState(false);
+  const [prjDependencies, setPrjDependencies] = useState<Record<string, TechStackType>>(
+    generalizeDependencies(APP_DEPENDENCIES, TechStack)
+  );
+  const [systemInfoCards, setSystemInfoCards] = useState<Array<[string, TechStackType]> | null>(
+    null
+  );
+  const [leadCMSbadges, setLeadCMSbadges] = useState<BannerBadge[] | null>(null);
   const [dataFetched, setDataFetched] = useState(false);
+  const [updateIndicator, setUpdateIndicator] = useState(false);
   const [preLoading, setPreLoading] = useState(true);
+  const [versionValidated, setVersionValidated] = useState(false);
 
-  const selfHostedBadge = LeadCMSbadges.find((mt) => mt.label === "Self-Hosted") || null;
-  const versionValidated = useRef(false);
+  // const selfHostedBadge = LeadCMSbadges.find((mt) => mt.label === "Self-Hosted") || null;
+  // const versionValidated = useRef(false)
 
   const { client } = useRequestContext();
 
   const operationHold = (ms: number) =>
     new Promise<void>((resolve) => window.setTimeout(() => resolve(), ms));
 
+  // banner related badges
+  useEffect(() => {
+    if (systemInfoCards) {
+      const website =
+        systemInfoCards?.find(
+          (tcstktype: [string, TechStackType]): tcstktype is [string, TechStackType] =>
+            tcstktype[0] === "site"
+        ) || null;
+      const siteVersion = website
+        ? website[1].segment_i?.tags?.find((tag) => tag.label === "version")?.value
+        : "unknown";
+
+      const badges = [
+        {
+          label: "Stable",
+          variant: "outline",
+          attr: "banner-transparent-green",
+        },
+        {
+          label: siteVersion,
+          variant: "outline",
+          attr: "banner-transparent-blue",
+        },
+        {
+          label: "MIT License",
+          variant: "outline",
+          attr: "banner-transparent-red",
+        },
+        {
+          label: "Self-Hosted",
+          variant: "outline",
+          attr: "banner-transparent-orange",
+        },
+      ];
+
+      setLeadCMSbadges(badges);
+    }
+  }, [systemInfoCards]);
+
+  // for system info card trio
+  useEffect(() => {
+    if (prjDependencies) {
+      const systemStack = { ...prjDependencies };
+
+      try {
+        if (currentVersion?.version) {
+          systemStack.site.segment_i.tags = [
+            { label: "version", value: `v${currentVersion?.version}`, attr: "primary" },
+          ];
+          systemStack.admin.segment_i.tags = [
+            { label: "version", value: `v${currentVersion?.version}`, attr: "primary" },
+          ];
+        }
+
+        if (latestVersion?.version) {
+          systemStack.site.segment_i.tags = [
+            // ...systemStack.site.segment_i.tags,
+            {
+              label: "latest-version",
+              value: `v${latestVersion?.version}`,
+              attr: "secondary",
+              ext: "available",
+            },
+          ];
+          systemStack.site.segment_i.tags = [
+            // ...systemStack.admin.segment_i.tags,
+            {
+              label: "latest-version",
+              value: `v${latestVersion?.version}`,
+              attr: "secondary",
+              ext: "available",
+            },
+          ];
+        }
+      } catch (e) {
+        console.log(e);
+      }
+
+      setPreLoading(false);
+      setSystemInfoCards(Object.entries(systemStack));
+    }
+  }, [prjDependencies]);
+
   ///////////////// temp hook ///////////////////////
   useEffect(() => {
     // const versionValidator = async () => {
-    if (currentVersion && gitRepoData && !versionValidated.current) {
+    if (currentVersion && gitRepoData && !versionValidated) {
       // Storage.server.deployment === "On-Premises"
       // await operationHold(5000);
 
-      const curVsn = parseFloat(currentVersion);
-      const lstVsn = parseFloat(gitRepoData["iPv4"]);
-      versionValidated.current = true;
+      const curVsn = parseFloat(currentVersion.version);
+      // const lstVsn = parseFloat(latestVersion.version);
+      const lstVsn = parseFloat(gitRepoData["iPv4"] || "unknown"); // temp
 
-      console.log(curVsn, lstVsn);
+      setVersionValidated(true);
+
+      // console.log(curVsn, lstVsn);
       if (curVsn < lstVsn) {
-        setPreLoading(false);
         setUpdateIndicator(curVsn < lstVsn);
+        console.log("initial uf");
       }
     }
     // };
 
     // versionValidator();
   }, [currentVersion, gitRepoData]);
-  //////////////////////////////////////////////////////
-
-  /*
-  useEffect(() => {
-    const versionValidator = async () => {
-      if (currentVersion && latestVersion && !versionValidated.current) {
-        // Storage.server.deployment === "On-Premises"operationHold
-        await operationHold(2000);
-
-        const curVsn = parseFloat(currentVersion);
-        const lstVsn = parseFloat(latestVersion);
-        versionValidated.current = true;
-
-        setUpdateIndicator(curVsn < lstVsn);
-      }
-    };
-
-    versionValidator();
-  }, [currentVersion, latestVersion]);
-  */
 
   useEffect(() => {
-    const getVersion = async () => {
+    const getDockerHostVersion = async () => {
       // fetch(`https://api.github.com/repos/LeadCMS/leadcms.admin/releases`)
       // fetch("https://api.github.com/repos/LeadCMS/leadcms.admin")
       fetch("http://localhost:8080/api/version") // mock fetch
         .then((response) => response.json())
         .then((data) => {
-          console.log(data);
           if (data) {
-            // const repoObj = JSON.parse(data);
-            // setGitRepoData(repoObj);
-
             setGitRepoData(data);
-            // setLatestVersion(data.latestRelease);
+            // setLatestVersion({
+            //   version: data?.version,
+            //   updatedOn: (data?.latestUpdate) ? data.latestUpdate : new Date().toISOString()
+            // });
           } else {
             setVersionFetchError(null);
           }
@@ -108,18 +179,21 @@ export const AboutModule = () => {
     const getCurrentVersion = async () => {
       const { data } = await client.api.versionList();
 
-      setCurrentVersion(data.version || "Unknown");
+      // setCurrentVersion({
+      //   version: data?.version,
+      //   updatedOn: (data?.latestUpdate) ? data.latestUpdate : new Date().toISOString()
+      // });
     };
 
     const getLatestVersion = async () => {
       await operationHold(5000);
 
-      await getVersion();
+      await getDockerHostVersion();
     };
 
     getCurrentVersion();
     getLatestVersion();
-  });
+  }, []);
 
   return (
     <ModuleWrapper breadcrumbs={[]} currentBreadcrumb={"About"}>
@@ -172,11 +246,13 @@ export const AboutModule = () => {
             }}
             cmpFontSize={10}
           >
-            {LeadCMSbadges.filter((mt) => mt.label !== "Self-Hosted").map((mt, _key) => (
-              <Badge key={`0${_key}`} className={`badge ${mt.attr}`}>
-                {mt.label}
-              </Badge>
-            ))}
+            {leadCMSbadges
+              ?.filter((mt) => mt.label !== "Self-Hosted")
+              .map((mt, _key) => (
+                <span key={`0${_key}`} className={`badge ${mt?.attr}`}>
+                  {mt.label}
+                </span>
+              ))}
           </TileContainer>
         </SubContainer>
 
@@ -195,7 +271,7 @@ export const AboutModule = () => {
                   <Download />
                   &nbsp;
                 </>
-                <span>New version available:&nbsp;v{latestVersion}</span>
+                <span>New version available:&nbsp;v{latestVersion?.version}</span>
               </h5>
               <p className="alert-context">
                 Update your on-premises deployment using Docker Compose:
@@ -222,16 +298,16 @@ export const AboutModule = () => {
           }}
         >
           <>
-            {systemInfoCards.map(([segmentKey, segment]) => (
+            {systemInfoCards?.map(([segmentKey, segment]: [string, TechStackType]) => (
               <CardContainer
                 key={segmentKey}
                 styleObj={{
                   cmpTag: `card card-${segmentKey}`,
                   cmpStyles: ["system-details-card"],
                 }}
-                cHeader={segment.segment_i || null}
-                cBody={segment.segment_ii || null}
-                cFooter={segment.segment_iii || null}
+                cHeader={segment?.segment_i || null}
+                cBody={segment?.segment_ii || null}
+                cFooter={segment?.segment_iii || null}
               />
             ))}
           </>
@@ -254,7 +330,7 @@ export const AboutModule = () => {
           rootElementAlt={"h2"}
           context="Resources"
           expanders={true}
-          divisable={true}
+          dividable={true}
         />
 
         <SubContainer
@@ -301,7 +377,7 @@ export const AboutModule = () => {
           rootElementAlt={"h2"}
           context="Development Team"
           expanders={true}
-          divisable={true}
+          dividable={true}
         />
 
         <SubContainer
