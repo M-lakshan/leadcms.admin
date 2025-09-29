@@ -58,7 +58,7 @@ const TabularGridContainer = styled(TabularGrid)<StyledProps>`
               font-weight: 500;
             }
 
-            &:first-child {
+            &:first-of-type {
               border-top-left-radius: 5px;
               border-bottom-left-radius: 5px;
             }
@@ -66,6 +66,10 @@ const TabularGridContainer = styled(TabularGrid)<StyledProps>`
             &:last-child {
               border-top-right-radius: 5px;
               border-bottom-right-radius: 5px;
+            }
+
+            .sklt-tag {
+              border-radius: 3px;
             }
           }
 
@@ -103,6 +107,24 @@ const TabularGridContainer = styled(TabularGrid)<StyledProps>`
           transform: translateY(-5px);
           text-indent: 15px;
         }
+
+        .sklt-tab-title {
+          border-radius: 3px;
+          margin: 5px 0px 8px;
+        }
+
+        .sklt-tab-descrp {
+          border-radius: 3px;
+          margin-bottom: 3px;
+          transform: translateX(12px);
+        }
+
+        .sklt-progress-tile-container {
+          transform: translateX(12px);
+          margin: 5px 0px 20px;
+          border-radius: 8px;
+          max-width: calc(100% - 12px) !important;
+        }
       }
 
       .status-tab-expand {
@@ -135,19 +157,19 @@ const TabularGridContainer = styled(TabularGrid)<StyledProps>`
               (theme) => theme.palette.customSegments.TabularGridContainer.primary
             )}
 
-            &:nth-child(odd) {
+            &:nth-of-type(odd) {
               justify-self: flex-end;
             }
 
-            &:first-child {
+            &:first-of-type {
               border-top-left-radius: ${serviceTagSingleEdgeCornerRadius};
             }
 
-            &:nth-child(2) {
+            &:nth-of-type(2) {
               border-top-right-radius: ${serviceTagSingleEdgeCornerRadius};
             }
 
-            &:nth-last-child(2) {
+            &:nth-last-of-child(2) {
               border-bottom-left-radius: ${serviceTagSingleEdgeCornerRadius};
             }
 
@@ -169,19 +191,19 @@ const TabularGridContainer = styled(TabularGrid)<StyledProps>`
               }
             }
 
-            .srvc_0_progress,
-            .srvc_10_progress,
-            .srvc_35_progress {
+            .srvc-0-progress,
+            .srvc-10-progress,
+            .srvc-35-progress {
               color: ${({ theme }) => theme.palette.customAlerts.danger.defaultText};
               background: ${({ theme }) => theme.palette.customAlerts.danger.light};
             }
 
-            .srvc_65_progress {
+            .srvc-65-progress {
               color: ${({ theme }) => theme.palette.customAlerts.attention.defaultText};
               background: ${({ theme }) => theme.palette.customAlerts.attention.light};
             }
 
-            .srvc_85_progress {
+            .srvc-85-progress {
               color: ${({ theme }) => theme.palette.customAlerts.complete.defaultText};
               background: ${({ theme }) => theme.palette.customAlerts.complete.light};
             }
@@ -200,9 +222,22 @@ const TabularGridContainer = styled(TabularGrid)<StyledProps>`
 
               .descrp {
                 font-size: 14px;
+                padding: 0px 5px;
                 color: ${({ theme }) =>
                   theme.palette.customSegments.TabularGridContainer.foreground};
                 text-indent: 3px;
+              }
+
+              .sklt-name {
+                margin-bottom: 5px;
+                border-radius: 3px;
+                transform: translateY(3px);
+              }
+
+              .sklt-descrp {
+                margin-bottom: 15px;
+                border-radius: 3px;
+                transform: translateY(3px);
               }
             }
           }
@@ -236,9 +271,17 @@ const TabularGridContainer = styled(TabularGrid)<StyledProps>`
               font-weight: 500;
             }
 
-            &:first-child,
-            &:nth-child(2) {
+            &:first-of-type,
+            &:nth-of-type(2) {
               margin-top: 10px;
+            }
+
+            .sklt-list-item-label {
+              border-radius: 3px;
+            }
+
+            .sklt-list-item-value {
+              border-radius: 3px;
             }
           }
         }
@@ -246,10 +289,10 @@ const TabularGridContainer = styled(TabularGrid)<StyledProps>`
         .development-terminal-container {
           ${GSB.DPflex("column-reverse", "center", "center", "max-content", "100%")}
           grid-area: 5/1/6/3;
-          padding: 12px;
+          padding: 0px 8px 12px;
           margin: 20px 0px 5px;
           border-radius: 8px;
-          max-width: calc(100% - 12px);
+          max-width: calc(100% - 12px) !important;
           background: ${({ theme }) => theme.palette.customSegments.TabularGridContainer.default};
           ${GSB.BoxShadow(
             "1px",
@@ -262,8 +305,8 @@ const TabularGridContainer = styled(TabularGrid)<StyledProps>`
           transform: translateX(1px);
 
           .sub-title {
-            ${GSB.DPblock("inline-block", "max-content", "inherit")}
-            padding: 12px 7px 0px;
+            ${GSB.DPblock("inline-block", "max-content", "100%")}
+            padding: 8px 15px 4px;
             font-size: 12px;
             color: ${({ theme }) => theme.palette.customSegments.TabularGridContainer.secondary};
           }

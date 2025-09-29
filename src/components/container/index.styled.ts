@@ -4,52 +4,11 @@ import { StyledProps } from "types";
 import { Card, Container, CustomTerminal, User } from "./index";
 import * as GSB from "@utils/general-style-builder";
 
-const backgroundTransition = keyframes`
-  from {
-    background-position: 0% 50%;
-  }
-  to {
-    background-position: 100% 50%;
-  }
-`;
-
 const MainContainer = styled(Container)<StyledProps>`
   ${GSB.OverwriteDefaults(false)}
   ${GSB.DPblock("block", "max-content", "100%")}
 
   &.about-section-container {
-
-    .mock-data-fetch-container {
-      ${GSB.DPblock("block", "max-content", "max-content")}
-      background: ${({ theme }) => theme.palette.customSegments.TabularGridContainer.default};
-      min-width: 250px;
-      border-radius: 5px;
-      padding: 15px 20px;
-
-      p.content {
-        ${GSB.DPflex("row", "center", "center", "max-content", "max-content")}
-        
-        span.loading-animation {
-          ${GSB.DPblock("inline-block", "24px", "200px")}
-            background: linear-gradient(
-            to right,
-            ${({ theme }) => theme.palette.customSegments.TabularGridContainer.primaryHover},
-            ${({ theme }) => theme.palette.customSegments.TabularGridContainer.secondary},
-            ${({ theme }) => theme.palette.customSegments.TabularGridContainer.secondaryHover},
-            ${({ theme }) => theme.palette.customSegments.TabularGridContainer.secondary},
-            ${({ theme }) => theme.palette.customSegments.TabularGridContainer.primaryHover}
-          );
-          background-size: 200% 100%;
-          animation: ${backgroundTransition} 3s cubic-bezier(.65,.05,.36,1) infinite alternate;
-          padding: 8px 12px;
-          border-radius: 3px;
-        }
-        
-        span.fetched-data {
-          font-weight: 500;
-        }
-      }
-    }
 
     @media (max-width: ${({ theme }) => theme.mediaQueryPoints.desktopXL}) {   
       
@@ -61,7 +20,7 @@ const MainContainer = styled(Container)<StyledProps>`
           margin: 10px 2px;
         }
   
-        &:first-child {
+        &:first-of-type {
           margin-bottom: 5px;
         }
         
@@ -374,6 +333,10 @@ const TileContainer = styled(Container)<StyledProps>`
         font-family: ${({ theme }) => theme.typography.fontFamily};
         color: ${({ theme }) => theme.palette.customSegments.TitleContainer.secondary};
       }
+
+      .sklt-domain {
+        border-radius: 5px;
+      }
     }
 
     &:hover {
@@ -438,6 +401,21 @@ const CardContainer = styled(Card)<StyledProps>`
           }
         }
       }
+
+      .sklt-title {
+        border-radius: 5px;
+        margin-bottom: 5px;
+      }
+
+      .sklt-descrp,
+      .sklt-label,
+      .sklt-value {
+        border-radius: 3px;
+      }
+
+      .sklt-tag {
+        border-radius: 30px;
+      }
     }
 
     .card-header {
@@ -461,6 +439,7 @@ const CardContainer = styled(Card)<StyledProps>`
 
         span {
           ${GSB.DPblock()}
+          transform: translateY(-5px);
         }
       }
 
@@ -538,7 +517,7 @@ const TerminalContainer = styled(CustomTerminal)<StyledProps>`
   &.terminal-container {
     ${GSB.DPflex("column", "flex-start", "flex-start", "max-content", "calc(100% - 10px)")}
     padding: 8px 10px;
-    margin: 8px 5px 2px;
+    margin: 8px 0px 2px;
     border-radius: 8px;
     background: ${({ theme }) => theme.palette.customSegments.TabularGridContainer.default};
 
@@ -586,7 +565,7 @@ const TerminalContainer = styled(CustomTerminal)<StyledProps>`
         ${GSB.DPblock("inline-block", "max-content", "max-content")}
         padding-top: 5px;
 
-        &:first-child {
+        &:first-of-type {
           padding-top: 0%;
         }
 
@@ -614,11 +593,11 @@ const UserContainer = styled(User)<StyledProps>`
     transform: translateY(25px);
     ${GSB.HoverOver("pointer", "250ms", "ease-out", "ease-in")}
 
-    &:nth-child(odd) {
+    &:nth-of-type(odd) {
       justify-self: flex-end;
     }
 
-    &:nth-child(even) {
+    &:nth-of-type(even) {
       justify-self: flex-start;
     }
 
@@ -649,6 +628,12 @@ const UserContainer = styled(User)<StyledProps>`
         font-size: 18px;
         font-weight: 500;
         margin-top: 10px;
+      }
+
+      .sklt-username,
+      .sklt-userrole {
+        border-radius: 3px;
+        margin-bottom: 5px;
       }
     }
 
