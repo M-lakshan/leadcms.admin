@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { LocalContainerProps } from "types";
 import { SetComponentStyles } from "@utils/general-helper";
 import { Root, List, Trigger, Content } from "@radix-ui/react-tabs";
 import { Globe, Server, Database, Clock } from "lucide-react";
+import { SkeletonPlaceholder } from "@components/custom-skeleton";
 import { TerminalContainer } from "@components/container";
 import { ProgressBar } from "@components/progress-bar";
+import { operationHold } from "@utils/general-helper";
 
 export { TabularGridContainer } from "./index.styled";
 
@@ -21,10 +23,12 @@ export const TabularGrid = ({
   gridObj,
   className,
   tableName,
+  skeletonTimeOut,
 }: LocalContainerProps & {
   gridObj: any;
   tableName?: string;
 }) => {
+  const [preLoading, setPreLoading] = useState(skeletonTimeOut && skeletonTimeOut > 0);
   const cmpStyles = SetComponentStyles({ className, styleObj });
   const [activeTab, setActiveTab] = useState({
     idx: 0,
@@ -80,6 +84,18 @@ export const TabularGrid = ({
     });
   };
 
+  useEffect(() => {
+    const renderAnimation = async () => {
+      if (preLoading && skeletonTimeOut) {
+        await operationHold(skeletonTimeOut);
+      }
+
+      setPreLoading(false);
+    };
+
+    renderAnimation();
+  }, []);
+
   return (
     <div {...(cmpID && { id: cmpID })} {...(cmpStyles && { className: cmpStyles })}>
       <Root
@@ -106,7 +122,19 @@ export const TabularGrid = ({
                 onMouseEnter={(e) => handleTriggerHoverIn(e.currentTarget)}
                 onMouseLeave={handleTriggerHoverOut}
               >
-                <>{gridObj[tabValue]["identifier"]}</>
+                {preLoading ? (
+                  <SkeletonPlaceholder
+                    styleObj={{
+                      cmpTag: "sklt",
+                      cmpStyles: ["sklt-tag"],
+                    }}
+                    variant="rectangular"
+                    width={"60%"}
+                    height={16}
+                  />
+                ) : (
+                  gridObj[tabValue]["identifier"]
+                )}
               </Trigger>
             ))}
           </div>
@@ -114,43 +142,133 @@ export const TabularGrid = ({
 
         {activeTab.label === "status" && (
           <Content value="status" className="tab-content status-tab-expand">
-            <>
-              <h2 className="tab-title">{gridObj.status.type}</h2>
-              <p className="tab-descrp">{gridObj.status.descrp}</p>
-              <ProgressBar
-                rate={gridObj.status.healthProgress}
-                label="Overall Health"
-                value={true}
-                negation={true}
-              />
-              <div className="detail-container">
-                {gridObj.status.services.map((service: any) => {
-                  const Icon = iconMap[service.icon as keyof typeof iconMap];
-                  const healthState = gridObj.status.healthProgress;
-                  let param = 0;
+            {preLoading ? (
+              <>
+                <SkeletonPlaceholder
+                  styleObj={{
+                    cmpTag: "sklt",
+                    cmpStyles: ["tab-title", "sklt-tab-title"],
+                  }}
+                  variant="rectangular"
+                  width={"35%"}
+                  height={28}
+                />
+                <SkeletonPlaceholder
+                  styleObj={{
+                    cmpTag: "sklt",
+                    cmpStyles: ["tab-descrp", "sklt-tab-descrp"],
+                  }}
+                  variant="rectangular"
+                  width={"70%"}
+                  height={16}
+                />
+                <SkeletonPlaceholder
+                  styleObj={{
+                    cmpTag: "sklt",
+                    cmpStyles: ["progress-tile-container", "sklt-progress-tile-container"],
+                  }}
+                  variant="rectangular"
+                  width={"100%"}
+                  height={"40px"}
+                />
+                <div className="detail-container">
+                  {gridObj.status.services.map((service: any) => {
+                    return (
+                      <div key={service.name} className={"service"}>
+                        <SkeletonPlaceholder
+                          styleObj={{
+                            cmpTag: "sklt",
+                            cmpStyles: ["service-icon", "sklt-service-icon"],
+                          }}
+                          variant="circular"
+                          width={35}
+                          height={35}
+                        />
+                        <div className="details">
+                          <SkeletonPlaceholder
+                            styleObj={{
+                              cmpTag: "name",
+                              cmpStyles: ["name", "sklt-name"],
+                            }}
+                            variant="rectangular"
+                            width={"35%"}
+                            height={14}
+                          />
+                          <SkeletonPlaceholder
+                            styleObj={{
+                              cmpTag: "sklt",
+                              cmpStyles: ["descrp", "sklt-descrp"],
+                            }}
+                            variant="rectangular"
+                            width={"70%"}
+                            height={12}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            ) : (
+              <>
+                <h2 className="tab-title">{gridObj.status.type}</h2>
+                <p className="tab-descrp">{gridObj.status.descrp}</p>
+                <ProgressBar
+                  rate={gridObj.status.healthProgress}
+                  label="Overall Health"
+                  value={true}
+                  negation={true}
+                />
+                <div className="detail-container">
+                  {gridObj.status.services.map((service: any) => {
+                    const Icon = iconMap[service.icon as keyof typeof iconMap];
+                    const healthState = gridObj.status.healthProgress;
+                    let param = 0;
 
-                  if (healthState >= 85) {
-                    param = 85;
-                  } else if (healthState >= 65) {
-                    param = 65;
-                  } else if (healthState >= 35) {
-                    param = 35;
-                  } else if (healthState >= 10) {
-                    param = 10;
-                  }
+                    if (healthState >= 85) {
+                      param = 85;
+                    } else if (healthState >= 65) {
+                      param = 65;
+                    } else if (healthState >= 35) {
+                      param = 35;
+                    } else if (healthState >= 10) {
+                      param = 10;
+                    }
+
+                    return (
+                      <div key={service.name} className={"service"}>
+                        {Icon && (
+                          <span className={`service-icon srvc-${param}-progress `}>
+                            <Icon className={`${service.bgColor}`} />
+                          </span>
+                        )}
+                        <div className="details">
+                          <p className="name">{service.name}</p>
+                          <p className="descrp">{service.description}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </Content>
+        )}
+
+        {!preLoading && activeTab.label === "database" && (
+          <Content value="database" className="tab-content database-tab-expand">
+            <>
+              <h2 className="tab-title">{gridObj.database.identifier}</h2>
+              <p className="tab-descrp">{gridObj.database.descrp}</p>
+              <div className="list">
+                {Object.entries(gridObj.database).map(([infoKey, value]) => {
+                  if (["identifier", "descrp"].includes(infoKey)) return null;
 
                   return (
-                    <div key={service.name} className={"service"}>
-                      {Icon && (
-                        <span className={`service-icon srvc_${param}_progress `}>
-                          <Icon className={`${service.bgColor}`} />
-                        </span>
-                      )}
-                      <div className="details">
-                        <p className="name">{service.name}</p>
-                        <p className="descrp">{service.description}</p>
-                      </div>
-                    </div>
+                    <p key={infoKey} className={"database-meta-info"}>
+                      <span>{infoKey}</span>
+                      <strong>{String(value)}</strong>
+                    </p>
                   );
                 })}
               </div>
@@ -158,26 +276,7 @@ export const TabularGrid = ({
           </Content>
         )}
 
-        {activeTab.label === "database" && (
-          <Content value="database" className="tab-content database-tab-expand">
-            <h2 className="tab-title">{gridObj.database.identifier}</h2>
-            <p className="tab-descrp">{gridObj.database.descrp}</p>
-            <div className="list">
-              {Object.entries(gridObj.database).map(([infoKey, value]) => {
-                if (["identifier", "descrp"].includes(infoKey)) return null;
-
-                return (
-                  <p key={infoKey} className={"database-meta-info"}>
-                    <span>{infoKey}</span>
-                    <strong>{String(value)}</strong>
-                  </p>
-                );
-              })}
-            </div>
-          </Content>
-        )}
-
-        {activeTab.label === "deployement" && (
+        {!preLoading && activeTab.label === "deployement" && (
           <Content value="deployement" className="tab-content deployement-tab-expand">
             <h2 className="tab-title">{gridObj.deployement.type}</h2>
             <p className="tab-descrp">{gridObj.deployement.descrp}</p>
@@ -211,6 +310,76 @@ export const TabularGrid = ({
                   }}
                 />
               </div>
+            )}
+          </Content>
+        )}
+
+        {preLoading && (activeTab.label === "database" || activeTab.label === "deployement") && (
+          <Content value={activeTab.label} className={`tab-content ${activeTab.label}-tab-expand`}>
+            <SkeletonPlaceholder
+              styleObj={{
+                cmpTag: "sklt",
+                cmpStyles: ["tab-title", "sklt-tab-title"],
+              }}
+              variant="rectangular"
+              width={"35%"}
+              height={28}
+            />
+            <SkeletonPlaceholder
+              styleObj={{
+                cmpTag: "sklt",
+                cmpStyles: ["tab-descrp", "sklt-tab-descrp"],
+              }}
+              variant="rectangular"
+              width={"70%"}
+              height={16}
+            />
+            <div className="list">
+              {Object.entries(gridObj.database).map(([infoKey, value]) => {
+                if (["identifier", "descrp"].includes(infoKey)) return null;
+
+                return (
+                  <p key={infoKey} className={"database-meta-info"}>
+                    <span>
+                      <SkeletonPlaceholder
+                        styleObj={{
+                          cmpTag: "sklt",
+                          cmpStyles: ["list-item-label", "sklt-list-item-label"],
+                        }}
+                        variant="rectangular"
+                        width={120}
+                        height={16}
+                      />
+                    </span>
+                    <strong>
+                      <SkeletonPlaceholder
+                        styleObj={{
+                          cmpTag: "sklt",
+                          cmpStyles: ["list-item-value", "sklt-list-item-value"],
+                        }}
+                        variant="rectangular"
+                        width={200}
+                        height={14}
+                      />
+                    </strong>
+                  </p>
+                );
+              })}
+            </div>
+            {activeTab.label === "deployement" && gridObj?.deployement?.showDockerHelp && (
+              <SkeletonPlaceholder
+                styleObj={{
+                  cmpTag: "sklt",
+                  cmpStyles: [
+                    "sub-tab-content",
+                    "development-terminal-container",
+                    "sklt-development-terminal-container",
+                  ],
+                }}
+                variant="rectangular"
+                width={"100%"}
+                height={250}
+              />
             )}
           </Content>
         )}

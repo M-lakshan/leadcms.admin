@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { SkeletonPlaceholder } from "@components/custom-skeleton";
 import { Globe, Server, Layers, Terminal } from "lucide-react";
 import { FaArrowTrendUp } from "react-icons/fa6";
 import { LocalContainerProps, CLIinstance, TechStackSegment } from "types";
 import { SetComponentStyles } from "@utils/general-helper";
+import { operationHold } from "@utils/general-helper";
 
 export {
   MainContainer,
@@ -28,9 +30,23 @@ export const Container = ({
   rootElement,
   cmpFontSize,
   className,
+  skeletonTimeOut,
 }: LocalContainerProps) => {
+  const [preLoading, setPreLoading] = useState(skeletonTimeOut && skeletonTimeOut > 0);
   const cmpStyles = SetComponentStyles({ className, styleObj });
   const RootElement: React.ElementType = rootElement || "div";
+
+  useEffect(() => {
+    const renderAnimation = async () => {
+      if (preLoading && skeletonTimeOut) {
+        await operationHold(skeletonTimeOut);
+      }
+
+      setPreLoading(false);
+    };
+
+    renderAnimation();
+  }, []);
 
   return (
     <RootElement {...(cmpID && { id: cmpID })} {...(cmpStyles && { className: cmpStyles })}>
@@ -52,7 +68,7 @@ export const CustomTerminal = ({
       {Object.entries(cliObj).map(([cliKey, cliContext], i) => {
         if (!Array.isArray(cliContext)) {
           return (
-            <p key={cliKey} className={`directory ${cliKey.toLowerCase()}_${i + 1}`}>
+            <p key={`${cliKey}_${i}`} className={`directory ${cliKey.toLowerCase()}_${i + 1}`}>
               <Terminal />
               &nbsp;<span>{cliContext}</span>
             </p>
@@ -60,9 +76,9 @@ export const CustomTerminal = ({
         } else {
           if (cliContext.every((item) => typeof item === "object" && item !== null)) {
             return (
-              <pre key={cliKey} className="terminal-box">
-                {cliContext.map(({ comment, command }, i) => (
-                  <div key={i} className="code-block">
+              <pre key={`${cliKey}_${i}`} className="terminal-box">
+                {cliContext.map(({ comment, command }, j) => (
+                  <div key={`${cliKey}_${i}_${j}`} className="code-block">
                     <code className="comment">{comment}</code>
                     <br />
                     <code className="command">{command}</code>
@@ -95,14 +111,164 @@ export const Card = ({
   cFooter,
   className,
   onMouseEnter,
+  skeletonTimeOut,
 }: LocalContainerProps & {
   cHeader?: TechStackSegment;
   cBody?: TechStackSegment;
   cFooter?: TechStackSegment;
   onMouseEnter?: (e: React.MouseEvent<HTMLDivElement>) => void;
 }) => {
+  const [preLoading, setPreLoading] = useState(skeletonTimeOut && skeletonTimeOut > 0);
   const cmpStyles = SetComponentStyles({ className, styleObj });
   const Icon = cHeader ? iconMap[cHeader?.icon as keyof typeof iconMap] : undefined;
+
+  useEffect(() => {
+    const renderAnimation = async () => {
+      if (preLoading && skeletonTimeOut) {
+        await operationHold(skeletonTimeOut);
+      }
+
+      setPreLoading(false);
+    };
+
+    renderAnimation();
+  }, []);
+
+  if (preLoading) {
+    return (
+      <div
+        {...(cmpID && { id: cmpID })}
+        {...(cmpStyles && { className: cmpStyles })}
+        onMouseEnter={onMouseEnter}
+      >
+        {cHeader && (
+          <div className="card-details card-header">
+            {cHeader?.title && (
+              <SkeletonPlaceholder
+                styleObj={{
+                  cmpTag: "sklt",
+                  cmpStyles: ["tile", "sklt-title"],
+                }}
+                variant="rectangular"
+                width={"55%"}
+                height={28}
+              />
+            )}
+            {cHeader?.descrp && (
+              <SkeletonPlaceholder
+                styleObj={{
+                  cmpTag: "sklt",
+                  cmpStyles: ["descrp", "sklt-descrp"],
+                }}
+                variant="rectangular"
+                width={"70%"}
+                height={16}
+              />
+            )}
+            {cHeader?.tags && (
+              <div className="tags">
+                {cHeader.tags.map((tag, tagKey) => (
+                  <SkeletonPlaceholder
+                    key={tagKey}
+                    styleObj={{
+                      cmpTag: "sklt",
+                      cmpStyles: ["sklt-tag", `tag_${Number(tagKey) + 1} ${tag.label} ${tag.attr}`],
+                    }}
+                    variant="rectangular"
+                    width={100}
+                    height={24}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+        {cBody && (
+          <div className="card-details card-body">
+            {cBody?.descrp && (
+              <SkeletonPlaceholder
+                styleObj={{
+                  cmpTag: "sklt",
+                  cmpStyles: ["descrp", "sklt-descrp"],
+                }}
+                variant="rectangular"
+                width={"80%"}
+                height={16}
+              />
+            )}
+            {cBody?.context && (
+              <div className="sums meta-sums">
+                {cBody.context.map((lblnv, lblnvKey) => (
+                  <p key={lblnvKey} className={`sum sklt-sum sum-${Number(lblnvKey) + 1}`}>
+                    <SkeletonPlaceholder
+                      styleObj={{
+                        cmpTag: "sklt",
+                        cmpStyles: ["label", "sklt-label"],
+                      }}
+                      variant="rectangular"
+                      width={135}
+                      height={16}
+                    />
+                    <SkeletonPlaceholder
+                      styleObj={{
+                        cmpTag: "sklt",
+                        cmpStyles: ["value", "sklt-value"],
+                      }}
+                      variant="rectangular"
+                      width={90}
+                      height={16}
+                    />
+                  </p>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+        {cFooter && (
+          <div className="card-details card-footer">
+            {cFooter?.descrp && (
+              <SkeletonPlaceholder
+                styleObj={{
+                  cmpTag: "sklt",
+                  cmpStyles: ["descrp", "sklt-descrp"],
+                }}
+                variant="rectangular"
+                width={"80%"}
+                height={16}
+              />
+            )}
+            {cFooter?.context && (
+              <div className="sums dependency-sums">
+                {cFooter.context.map((dpncy, dpncyKey) => (
+                  <p key={dpncyKey} className={`sum sklt-sum sum-${Number(dpncyKey) + 1}`}>
+                    <SkeletonPlaceholder
+                      styleObj={{
+                        cmpTag: "sklt",
+                        cmpStyles: ["label", "sklt-label"],
+                      }}
+                      variant="rectangular"
+                      width={100}
+                      height={14}
+                    />
+                    <SkeletonPlaceholder
+                      styleObj={{
+                        cmpTag: "sklt",
+                        cmpStyles: ["value", "sklt-value"],
+                      }}
+                      variant="rectangular"
+                      width={50}
+                      height={14}
+                    />
+                  </p>
+                ))}
+              </div>
+            )}
+            {cFooter?.children && <>{cFooter.children}</>}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div
@@ -183,6 +349,7 @@ export const User = ({
   memberObj,
   rootElement,
   className,
+  skeletonTimeOut,
 }: LocalContainerProps & {
   memberObj: {
     avatar: string;
@@ -192,9 +359,66 @@ export const User = ({
     descrp?: string;
   };
 }) => {
+  const [preLoading, setPreLoading] = useState(skeletonTimeOut && skeletonTimeOut > 0);
   const cmpStyles = SetComponentStyles({ className, styleObj });
   const RootElement: React.ElementType = (memberObj.url ? "a" : rootElement) || "div";
   const { avatar, name, role, url, descrp } = memberObj;
+
+  useEffect(() => {
+    const renderAnimation = async () => {
+      if (preLoading && skeletonTimeOut) {
+        await operationHold(skeletonTimeOut);
+      }
+
+      setPreLoading(false);
+    };
+
+    renderAnimation();
+  }, []);
+
+  if (preLoading) {
+    return (
+      <RootElement
+        {...(cmpID && { id: cmpID })}
+        {...(cmpStyles && { className: `${cmpStyles}${descrp ? " described" : ""}` })}
+        {...(url && {
+          href: url,
+          target: "_blank",
+        })}
+      >
+        <div className="card-top">
+          <SkeletonPlaceholder
+            styleObj={{
+              cmpTag: "sklt",
+              cmpStyles: ["dp", "sklt-dp"],
+            }}
+            className="dp sklt-dp"
+            variant="circular"
+            width={80}
+            height={80}
+          />
+          <SkeletonPlaceholder
+            styleObj={{
+              cmpTag: "sklt",
+              cmpStyles: ["username", "sklt-username"],
+            }}
+            variant="rectangular"
+            width={180}
+            height={18}
+          />
+          <SkeletonPlaceholder
+            styleObj={{
+              cmpTag: "sklt",
+              cmpStyles: ["userrole", "sklt-userrole"],
+            }}
+            variant="rectangular"
+            width={120}
+            height={14}
+          />
+        </div>
+      </RootElement>
+    );
+  }
 
   return (
     <RootElement
@@ -206,7 +430,7 @@ export const User = ({
       })}
     >
       <div className="card-top">
-        <img src={avatar || ""} alt={`display_profile-${name}`} />
+        <img src={avatar || ""} alt={`display-profile-${name}`} />
         <p className="username">{name}</p>
         <p className="userrole">{role}</p>
         {descrp && (
