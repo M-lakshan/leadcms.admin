@@ -2,7 +2,9 @@ import { RequestContextType } from "@providers/request-provider";
 import { continentListStorageKey, countryListStorageKey } from "./constants";
 import { NotificationsService } from "@hooks";
 import { CustomStylingInstance, TechStackType, TechStackTypeTag } from "types";
-import { string } from "zod";
+
+export const operationHold = (ms: number) =>
+  new Promise<void>((resolve) => window.setTimeout(() => resolve(), ms));
 
 export const getCountryList = async (context: RequestContextType) => {
   const countries = localStorage.getItem(countryListStorageKey);
@@ -52,33 +54,6 @@ export const getContinentByCode = async (context: RequestContextType, code: stri
   } else {
     return null;
   }
-};
-
-export const getFormattedDateTime = (dateToConvert: string) => {
-  const date = new Date(dateToConvert);
-  const formattedDate = date.toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
-  const formattedTime = date.toLocaleTimeString(undefined, {
-    hour: "numeric",
-    minute: "numeric",
-    second: "numeric",
-    hour12: true,
-  });
-  const formattedDateTime = `${formattedDate}  ${formattedTime}`;
-  return formattedDateTime;
-};
-
-export const getFormattedDateOnly = (dateToConvert: string) => {
-  const date = new Date(dateToConvert);
-  const formattedDate = date.toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
-  return formattedDate;
 };
 
 export const networkErrorToStringArray = (error: unknown) => {
@@ -227,9 +202,10 @@ export function generalizeDependencies(
             tags: category.tags || [],
           },
           segment_ii: {
-            context: category.segment_ii?.context || [
-              { label: "framework", value: "Unknown" },
-              { label: "last-updated", value: new Date().toISOString().split("T")[0] },
+            context: [
+              { key: "frmwk_i", label: "framework", value: category?.framework.label || "unknown" },
+              { key: "frmwk_ii", label: "last-updated", value: "unknown" },
+              ...(category.segment_ii?.context ?? []),
             ],
           },
           segment_iii: {
@@ -243,9 +219,13 @@ export function generalizeDependencies(
         };
 
     const checklist: string[] = category.checklist || [];
+    const frameworkTags: string[] = category?.framework?.alts || [];
 
     Object.entries(filterFrameworks(groupedDeps)).forEach(([depName, version]) => {
-      if (checklist.some((tag) => depName.includes(tag))) {
+      if (
+        checklist.some((tag) => depName.includes(tag)) &&
+        !frameworkTags.some((tag) => depName.includes(tag.toLowerCase()))
+      ) {
         const keyName = depName.startsWith("@") ? depName.replace("@", "") : depName;
 
         const labelName = keyName
@@ -300,4 +280,101 @@ export function SetComponentStyles({
     .filter(Boolean)
     .join(" ")
     .trim();
+}
+
+export const getFormattedDateOnly = (dateToConvert: string, reverse = false) => {
+  const date = new Date(dateToConvert);
+  const formattedDate = date.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const [y, m, d] = formattedDate.split("-");
+
+  return !reverse ? formattedDate : [d, m, y].join("-");
+};
+
+export const getFormattedDateTime = (dateToConvert: string, reverse = false) => {
+  const date = new Date(dateToConvert);
+  const formattedDate = getFormattedDateOnly(dateToConvert, reverse);
+  const formattedTime = date.toLocaleTimeString(undefined, {
+    hour: "numeric",
+    minute: "numeric",
+    second: "numeric",
+    hour12: true,
+  });
+  const formattedDateTime = `${formattedDate}  ${formattedTime}`;
+  return formattedDateTime;
+};
+
+export function GetISOstrDate({
+  dateStr,
+  dtType,
+  dtFormat,
+  suffix,
+}: {
+  dateStr?: string;
+  dtType?: string | "date_only" | "time_only" | "datetime";
+  dtFormat?: string | "dd-mm-yyyy" | "yyyy-mm-dd" | "H:M:S" | "h:m:s";
+  suffix?: string;
+}): string {
+  const checkPlurality = (cntx: number, prefix: string) => {
+    if (cntx > 0) {
+      return `${prefix}${cntx > 1 ? "s" : ""}`;
+    } else {
+      return `${prefix}s`;
+    }
+  };
+
+  if (dateStr) {
+    let result = dateStr.split("T")[0];
+
+    if (dtType && dtType !== "date_only") {
+      const date = new Date(dateStr);
+
+      if (dtType === "time_only") {
+        const hrs = date.getHours();
+        const mins = date.getMinutes();
+
+        if (dtFormat === "H:M:S") {
+          result = `${checkPlurality(hrs, "hour")}${
+            mins > 0 ? `, ${checkPlurality(mins, "minute")}` : ""
+          }ago`;
+        } else if (dtFormat === "h:m:s") {
+          result = `${hrs}h${mins > 0 ? `:${mins}m` : ""} ago`;
+        }
+      } else if (dtType === "datetime") {
+        const now = new Date();
+        const diffInMs = now.getTime() - date.getTime();
+        const diffInHours = diffInMs / (1000 * 60 * 60);
+
+        if (diffInHours < 24) {
+          const hrs = Math.floor(diffInHours);
+          const mins = Math.floor((diffInHours - hrs) * 60);
+
+          result = `${checkPlurality(hrs, "hour")}${
+            mins > 0 ? `, ${checkPlurality(mins, "minute")}` : ""
+          }ago`;
+        } else {
+          const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
+          const yearsAgo = Math.floor(diffInDays / 365);
+          const monthsAgo = Math.floor((diffInDays % 365) / 30);
+
+          if (yearsAgo > 0) {
+            result = `${yearsAgo} year${yearsAgo > 1 ? "s" : ""} ago`;
+          } else if (monthsAgo > 0) {
+            result = `${monthsAgo} month${monthsAgo > 1 ? "s" : ""} ago`;
+          } else {
+            result = `${Math.floor(diffInDays)} day${Math.floor(diffInDays) > 1 ? "s" : ""} ago`;
+          }
+        }
+      }
+    } else {
+      result = getFormattedDateOnly(dateStr, dtFormat === "dd-mm-yyyy");
+    }
+
+    return result + (suffix ?? "");
+  } else {
+    return new Date().toLocaleTimeString() + (suffix ?? "");
+  }
 }
