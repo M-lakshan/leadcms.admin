@@ -93,6 +93,7 @@ export type LocalContainerProps = {
   rootElement?: "article" | "section" | "div";
   styleObj?: CustomStylingInstance;
   cmpFontSize?: number | 14;
+  skeletonTimeOut?: number | 0;
 };
 
 export type StyledProps = LocalContainerProps & {
@@ -116,6 +117,7 @@ export type TechStackTypeTag = {
   tag?: string;
   attr?: string;
   ext?: string;
+  key?: string;
 };
 
 export type TechStackType = {
@@ -133,6 +135,8 @@ export type BannerBadge = {
 };
 
 export type VersionDetails = {
-  version: string | null | undefined;
+  label: string;
+  version: string;
   updatedOn?: string;
+  extender?: number;
 };
