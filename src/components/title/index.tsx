@@ -13,13 +13,13 @@ export const Title = ({
   expanders,
   dividable,
 }: LocalContainerProps & {
-  rootElementAlt: "h6" | "h5" | "h4" | "h3" | "h2" | "h1" | "p";
   context: string;
+  rootElementAlt?: "h6" | "h5" | "h4" | "h3" | "h2" | "h1" | "div";
   expanders?: boolean;
   dividable?: boolean;
 }) => {
   const cmpStyles = SetComponentStyles({ className, styleObj });
-  const RootElement: React.ElementType = rootElementAlt || "h3";
+  const RootElement: React.ElementType = rootElementAlt || "div";
 
   return (
     <RootElement {...(cmpID && { id: cmpID })} {...(cmpStyles && { className: cmpStyles })}>
