@@ -2,8 +2,10 @@ import { ModuleWrapper } from "@components/module-wrapper";
 import { useRequestContext } from "@providers/request-provider";
 import { Alert, Badge } from "@mui/material";
 import { useEffect, useState, useRef } from "react";
+import semver from "semver";
 import { Download, Heart, Coffee, Laptop, Github } from "lucide-react";
-import { generalizeDependencies } from "@utils/general-helper";
+import { operationHold, generalizeDependencies, GetISOstrDate } from "@utils/general-helper";
+import { SkeletonPlaceholder } from "@components/custom-skeleton";
 import {
   MainContainer,
   SubContainer,
@@ -14,7 +16,7 @@ import {
 } from "@components/container";
 import { TabularGridContainer } from "@components/tabular-grid";
 import { TitleContainer } from "@components/title";
-import { BannerBadge, TechStackType, TechStackTypeTag, VersionDetails } from "types";
+import { BannerBadge, TechStackType, VersionDetails } from "types";
 import {
   TechStack,
   Storage,
@@ -25,10 +27,10 @@ import {
 } from "./siteConfigInfo";
 
 export const AboutModule = () => {
-  const [gitRepoData, setGitRepoData] = useState(null); // remove - unnecessary
+  const [dockerRepoData, setDockerRepoData] = useState<any>(null);
   const [latestVersion, setLatestVersion] = useState<VersionDetails | null>(null);
   const [currentVersion, setCurrentVersion] = useState<VersionDetails | null>(null);
-  const [versionFetchError, setVersionFetchError] = useState<string | null>(null);
+  const [versionFetchError, setVersionFetchError] = useState<string[] | null>(null);
   const [prjDependencies, setPrjDependencies] = useState<Record<string, TechStackType>>(
     generalizeDependencies(APP_DEPENDENCIES, TechStack)
   );
@@ -36,22 +38,20 @@ export const AboutModule = () => {
     null
   );
   const [leadCMSbadges, setLeadCMSbadges] = useState<BannerBadge[] | null>(null);
+  // really needed (demo included) ?
+  const [selfHostedBadge, setSelfHostedBadge] = useState<BannerBadge | null>(null);
   const [dataFetched, setDataFetched] = useState(false);
   const [updateIndicator, setUpdateIndicator] = useState(false);
   const [preLoading, setPreLoading] = useState(true);
   const [versionValidated, setVersionValidated] = useState(false);
 
-  // const selfHostedBadge = LeadCMSbadges.find((mt) => mt.label === "Self-Hosted") || null;
-  // const versionValidated = useRef(false)
-
   const { client } = useRequestContext();
-
-  const operationHold = (ms: number) =>
-    new Promise<void>((resolve) => window.setTimeout(() => resolve(), ms));
+  const defSkltnTmout = 2000;
+  const defSkltnTmoutMultiplier = 5 / 2;
 
   // banner related badges
   useEffect(() => {
-    if (systemInfoCards) {
+    if (systemInfoCards && versionValidated) {
       const website =
         systemInfoCards?.find(
           (tcstktype: [string, TechStackType]): tcstktype is [string, TechStackType] =>
@@ -82,11 +82,14 @@ export const AboutModule = () => {
           variant: "outline",
           attr: "banner-transparent-orange",
         },
-      ];
+      ].filter((bdg) => bdg.label);
 
+      // setSelfHostedBadge(badges.find((mt) => mt.label === "Self-Hosted") || null)
       setLeadCMSbadges(badges);
+      setDataFetched(true);
+      setPreLoading(false);
     }
-  }, [systemInfoCards]);
+  }, [systemInfoCards, versionValidated]);
 
   // for system info card trio
   useEffect(() => {
@@ -101,11 +104,29 @@ export const AboutModule = () => {
           systemStack.admin.segment_i.tags = [
             { label: "version", value: `v${currentVersion?.version}`, attr: "primary" },
           ];
+          systemStack.site.segment_ii.context = [
+            (systemStack.site.segment_ii.context ?? [])[0],
+            {
+              ...(systemStack.site.segment_ii.context ?? [])[1],
+              value: GetISOstrDate({
+                dateStr: currentVersion?.updatedOn,
+              }),
+            },
+          ];
+          systemStack.admin.segment_ii.context = [
+            (systemStack.admin.segment_ii.context ?? [])[0],
+            {
+              ...(systemStack.admin.segment_ii.context ?? [])[1],
+              value: GetISOstrDate({
+                dateStr: currentVersion?.updatedOn,
+              }),
+            },
+          ];
         }
 
         if (latestVersion?.version) {
           systemStack.site.segment_i.tags = [
-            // ...systemStack.site.segment_i.tags,
+            ...(systemStack.site.segment_i.tags ?? []),
             {
               label: "latest-version",
               value: `v${latestVersion?.version}`,
@@ -113,8 +134,8 @@ export const AboutModule = () => {
               ext: "available",
             },
           ];
-          systemStack.site.segment_i.tags = [
-            // ...systemStack.admin.segment_i.tags,
+          systemStack.admin.segment_i.tags = [
+            ...(systemStack.admin.segment_i.tags ?? []),
             {
               label: "latest-version",
               value: `v${latestVersion?.version}`,
@@ -123,70 +144,135 @@ export const AboutModule = () => {
             },
           ];
         }
-      } catch (e) {
-        console.log(e);
+      } catch (err: any) {
+        const errors = [...(versionFetchError ?? []), err.message];
+
+        setVersionFetchError(errors);
       }
 
-      setPreLoading(false);
       setSystemInfoCards(Object.entries(systemStack));
     }
   }, [prjDependencies]);
 
-  ///////////////// temp hook ///////////////////////
   useEffect(() => {
-    // const versionValidator = async () => {
-    if (currentVersion && gitRepoData && !versionValidated) {
-      // Storage.server.deployment === "On-Premises"
-      // await operationHold(5000);
+    const versionValidator = async () => {
+      if (currentVersion?.version && latestVersion?.version) {
+        await operationHold(defSkltnTmout / 5);
 
-      const curVsn = parseFloat(currentVersion.version);
-      // const lstVsn = parseFloat(latestVersion.version);
-      const lstVsn = parseFloat(gitRepoData["iPv4"] || "unknown"); // temp
+        const updAvailable = semver.lt(currentVersion.version, latestVersion.version);
 
-      setVersionValidated(true);
-
-      // console.log(curVsn, lstVsn);
-      if (curVsn < lstVsn) {
-        setUpdateIndicator(curVsn < lstVsn);
-        console.log("initial uf");
+        setUpdateIndicator(updAvailable);
+        setVersionValidated(true);
       }
-    }
-    // };
+    };
 
-    // versionValidator();
-  }, [currentVersion, gitRepoData]);
+    versionValidator();
+  }, [currentVersion, latestVersion]);
 
   useEffect(() => {
-    const getDockerHostVersion = async () => {
-      // fetch(`https://api.github.com/repos/LeadCMS/leadcms.admin/releases`)
-      // fetch("https://api.github.com/repos/LeadCMS/leadcms.admin")
-      fetch("http://localhost:8080/api/version") // mock fetch
-        .then((response) => response.json())
+    const dockerPRJnamespace = "leadcms";
+    const dockerPRJrepo = "core";
+
+    const getSpecificVersionLstUpd = async (version: string) => {
+      let result = new Date().toISOString();
+
+      client.api
+        .dockerTagDetail(dockerPRJnamespace, dockerPRJrepo, version)
+        .then((response) => {
+          return response.json();
+        })
         .then((data) => {
-          if (data) {
-            setGitRepoData(data);
-            // setLatestVersion({
-            //   version: data?.version,
-            //   updatedOn: (data?.latestUpdate) ? data.latestUpdate : new Date().toISOString()
-            // });
+          if (data?.last_updated) {
+            result = data.last_updated;
           } else {
             setVersionFetchError(null);
           }
         })
-        .catch((err) => setVersionFetchError(err.message));
+        .catch((err) => {
+          const errors = [...(versionFetchError ?? []), err.message];
+
+          setVersionFetchError(errors);
+        });
+
+      return result;
+    };
+
+    const getDockerHostVersion = async () => {
+      client.api
+        .dockerTagsDetail(dockerPRJnamespace, dockerPRJrepo)
+        .then((response) => {
+          return response.json();
+        })
+        .then((data) => {
+          if (data) {
+            const retrievedVersionList = data
+              .map((v: string) => {
+                const versionStr = v.replace("-pre", "");
+
+                return {
+                  label: v,
+                  version: versionStr,
+                  extender: parseFloat(versionStr),
+                };
+              })
+              .filter((v: any) => {
+                return (
+                  (typeof v.extender === "number" && !isNaN(v.extender)) || semver.valid(v.version)
+                );
+              })
+              .sort((fstCmpr: any, nxtCmpr: any) => {
+                return semver.rcompare(fstCmpr.version, nxtCmpr.version);
+              });
+
+            if (retrievedVersionList && retrievedVersionList?.length > 0) {
+              const setLatestTagVersion = async () => {
+                const latestTagVersion = retrievedVersionList[0];
+                const lastUpdateDateStr = await getSpecificVersionLstUpd(latestTagVersion.label);
+
+                latestTagVersion.updatedOn = lastUpdateDateStr;
+
+                setLatestVersion(latestTagVersion);
+              };
+
+              setLatestTagVersion();
+              setDockerRepoData(retrievedVersionList);
+            }
+          } else {
+            setVersionFetchError(null);
+          }
+        })
+        .catch((err) => {
+          const errors = [...(versionFetchError ?? []), err.message];
+
+          setVersionFetchError(errors);
+        });
     };
 
     const getCurrentVersion = async () => {
       const { data } = await client.api.versionList();
 
-      // setCurrentVersion({
-      //   version: data?.version,
-      //   updatedOn: (data?.latestUpdate) ? data.latestUpdate : new Date().toISOString()
-      // });
+      try {
+        if (data) {
+          const versionLabel = data.version?.substring(0, data.version.indexOf("-pre") + 4);
+
+          if (versionLabel) {
+            const lastUpdateDateStr = await getSpecificVersionLstUpd(versionLabel);
+
+            setCurrentVersion({
+              label: versionLabel,
+              version: versionLabel.replace("-pre", ""),
+              updatedOn: lastUpdateDateStr,
+              extender: parseFloat(versionLabel),
+            });
+          }
+        }
+      } catch (err: any) {
+        setVersionFetchError([err.message]);
+      }
     };
 
     const getLatestVersion = async () => {
-      await operationHold(5000);
+      await operationHold(defSkltnTmout);
 
       await getDockerHostVersion();
     };
@@ -205,17 +291,6 @@ export const AboutModule = () => {
         }}
         cmpFontSize={18}
       >
-        <div className="mock-data-fetch-container">
-          <p className="content">
-            <span className="label">Attribute: </span>&nbsp;
-            {preLoading ? (
-              <span className="loading-animation">&nbsp;</span>
-            ) : (
-              <span className="fetched-data">- result | update available -</span>
-            )}
-          </p>
-        </div>
-
         <SubContainer
           cmpID="banner_area"
           styleObj={{
@@ -267,11 +342,9 @@ export const AboutModule = () => {
           >
             <Alert className="alert-panel normal">
               <h5 className="alert-title">
-                <>
-                  <Download />
-                  &nbsp;
-                </>
-                <span>New version available:&nbsp;v{latestVersion?.version}</span>
+                <Download />
+                <span>New version available: v</span>
+                <strong>{latestVersion?.version}</strong>
               </h5>
               <p className="alert-context">
                 Update your on-premises deployment using Docker Compose:
@@ -305,6 +378,7 @@ export const AboutModule = () => {
                   cmpTag: `card card-${segmentKey}`,
                   cmpStyles: ["system-details-card"],
                 }}
+                skeletonTimeOut={dataFetched ? 0 : defSkltnTmout * defSkltnTmoutMultiplier}
                 cHeader={segment?.segment_i || null}
                 cBody={segment?.segment_ii || null}
                 cFooter={segment?.segment_iii || null}
@@ -318,6 +392,7 @@ export const AboutModule = () => {
             cmpTag: "tabular-segment",
             cmpStyles: ["product-stack-segment"],
           }}
+          skeletonTimeOut={dataFetched ? 0 : defSkltnTmout * defSkltnTmoutMultiplier}
           gridObj={SystemStatus}
           tableName={"Product-Stack"}
         />
@@ -345,28 +420,51 @@ export const AboutModule = () => {
           }}
           cmpFontSize={16}
         >
-          <>
-            {ExternalResources.map((link, linkKey) => (
-              <TileContainer
-                key={linkKey}
-                styleObj={{
-                  cmpTag: "container",
-                  cmpStyles: ["tile-container", "resource-container"],
-                }}
-                cmpFontSize={16}
+          {ExternalResources.map((link, linkKey) => (
+            <TileContainer
+              key={linkKey}
+              styleObj={{
+                cmpTag: "container",
+                cmpStyles: ["tile-container", "resource-container", "sklt-resource-container"],
+              }}
+              cmpFontSize={16}
+            >
+              <a
+                {...(!preLoading && { href: link.url })}
+                target="_blank"
+                className="resource-link"
+                rel="noopener noreferrer"
               >
-                <a
-                  href={link.url}
-                  target="_blank"
-                  className="resource-link"
-                  rel="noopener noreferrer"
-                >
-                  <span className="icon">{link.icon}</span>
-                  <h4 className="domain">{link.name}</h4>
-                </a>
-              </TileContainer>
-            ))}
-          </>
+                {!dataFetched ? (
+                  <>
+                    <SkeletonPlaceholder
+                      styleObj={{
+                        cmpTag: "sklt",
+                        cmpStyles: ["sklt-icon"],
+                      }}
+                      variant="circular"
+                      width={60}
+                      height={60}
+                    />
+                    <SkeletonPlaceholder
+                      styleObj={{
+                        cmpTag: "sklt",
+                        cmpStyles: ["domain", "sklt-domain"],
+                      }}
+                      variant="rectangular"
+                      width={"45%"}
+                      height={16}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <span className="icon">{link.icon}</span>
+                    <h4 className="domain">{link.name}</h4>
+                  </>
+                )}
+              </a>
+            </TileContainer>
+          ))}
         </SubContainer>
 
         <TitleContainer
@@ -398,6 +496,7 @@ export const AboutModule = () => {
                   cmpTag: "user-card",
                   cmpStyles: ["contributor-user-card"],
                 }}
+                skeletonTimeOut={dataFetched ? 0 : defSkltnTmout * defSkltnTmoutMultiplier}
                 cmpFontSize={14}
                 memberObj={member}
               />
@@ -411,7 +510,6 @@ export const AboutModule = () => {
             cmpTag: "title-bar",
             cmpStyles: ["footer-title-bar"],
           }}
-          rootElementAlt={"p"}
           context=""
         >
           <div className="footer-panel">
