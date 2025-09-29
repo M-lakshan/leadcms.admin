@@ -133,6 +133,6 @@ export type BannerBadge = {
 };
 
 export type VersionDetails = {
-  version: "string";
-  updatedOn?: "string";
+  version: string | null | undefined;
+  updatedOn?: string;
 };
