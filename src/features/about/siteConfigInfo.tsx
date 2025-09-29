@@ -8,6 +8,10 @@ export const TechStack = {
       title: "Website",
       descrp: "Next.js with Typescript",
       tags: [],
+      framework: {
+        label: "Next.js",
+        alts: ["Next.js", "NextJS", "Next"],
+      },
       checklist: [
         "typescript",
         "ts-node",
@@ -25,8 +29,12 @@ export const TechStack = {
       // dynamic obj
       icon: "Layers",
       title: "Admin Portal",
-      descrp: "React admin interface with Material-UI",
+      descrp: "React.js with Material-UI",
       tags: [],
+      framework: {
+        label: "React.js",
+        alts: ["React.js", "ReactJS", "React"],
+      },
       checklist: [
         "react",
         "mui",
